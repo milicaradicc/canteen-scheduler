@@ -23,3 +23,7 @@ Aplikacija za upravljanje rezervacijama u menzama — kreiranje menzi, radnih sa
 4. Pokretanje aplikacije
    ```bash
    mvn spring-boot:run
+
+Aplikacija koristi in-memory H2 bazu, tako da se podaci brišu pri svakom restartu aplikacije.
+
+Nakon pokretanja, API je dostupan na http://localhost:8080
