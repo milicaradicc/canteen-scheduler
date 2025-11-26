@@ -6,10 +6,14 @@ import com.example.demo.exception.NotFoundException;
 import com.example.demo.model.Canteen;
 import com.example.demo.model.WorkingHour;
 import com.example.demo.repository.CanteenRepository;
+import com.example.demo.repository.ReservationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,6 +21,9 @@ public class CanteenService {
 
     @Autowired
     private CanteenRepository canteenRepository;
+
+    @Autowired
+    private ReservationRepository reservationRepository;
 
     public CreatedCanteenDTO create(String studentId, CreateCanteenDTO dto) {
         if (dto == null) {
@@ -190,5 +197,135 @@ public class CanteenService {
         Canteen canteen = canteenRepository.findById(canteenId)
                 .orElseThrow(() -> new NotFoundException("Canteen with id " + canteenId + " not found."));
         canteenRepository.delete(canteen);
+    }
+
+    public List<CanteenCapacityDTO> getCanteensStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            int durationMinutes
+    ) {
+        List<Canteen> canteens = canteenRepository.findAll();
+        List<CanteenCapacityDTO> result = new ArrayList<>();
+
+        if (durationMinutes != 30 && durationMinutes != 60) {
+            throw new InvalidInputException("Duration must be either 30 or 60 minutes");
+        }
+
+        for (Canteen canteen : canteens) {
+            List<SlotDTO> slots = new ArrayList<>();
+
+            LocalDate date = startDate;
+            while (!date.isAfter(endDate)) {
+                LocalTime slotTime = startTime;
+                while (!slotTime.plusMinutes(durationMinutes).isAfter(endTime)) {
+                    LocalDateTime slotStart = LocalDateTime.of(date, slotTime);
+                    LocalDateTime slotEnd = slotStart.plusMinutes(durationMinutes);
+
+                    if (isSlotInWorkingHours(canteen, slotTime, slotTime.plusMinutes(durationMinutes))) {
+                        int booked = reservationRepository.countReservationsInInterval(
+                                canteen.getNumericId(),
+                                slotStart,
+                                slotEnd
+                        );
+
+                        SlotDTO slot = new SlotDTO();
+                        slot.setMeal(determineMeal(slotTime));
+                        slot.setDate(date);
+                        slot.setStartTime(slotTime);
+                        slot.setRemainingCapacity(Math.max(canteen.getCapacity() - booked, 0));
+
+                        slots.add(slot);
+                    }
+                    slotTime = slotTime.plusMinutes(durationMinutes);
+                }
+                date = date.plusDays(1);
+            }
+
+            CanteenCapacityDTO dto = new CanteenCapacityDTO();
+            dto.setCanteenId(canteen.getId());
+            dto.setSlots(slots);
+            result.add(dto);
+        }
+
+        return result;
+    }
+
+    public CanteenCapacityDTO getCanteenStatus(
+            String canteenId,
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            int durationMinutes
+    ) {
+        Canteen canteen = canteenRepository.findById(canteenId)
+                .orElseThrow(() -> new NotFoundException("Canteen with id " + canteenId + " not found."));
+
+        if (durationMinutes != 30 && durationMinutes != 60) {
+            throw new InvalidInputException("Duration must be either 30 or 60 minutes");
+        }
+
+        List<SlotDTO> slots = new ArrayList<>();
+
+        LocalDate date = startDate;
+        while (!date.isAfter(endDate)) {
+            LocalTime slotTime = startTime;
+            while (!slotTime.plusMinutes(durationMinutes).isAfter(endTime)) {
+                LocalDateTime slotStart = LocalDateTime.of(date, slotTime);
+                LocalDateTime slotEnd = slotStart.plusMinutes(durationMinutes);
+
+                if (isSlotInWorkingHours(canteen, slotTime, slotTime.plusMinutes(durationMinutes))) {
+                    int booked = reservationRepository.countReservationsInInterval(
+                            canteen.getNumericId(),
+                            slotStart,
+                            slotEnd
+                    );
+
+                    SlotDTO slot = new SlotDTO();
+                    slot.setMeal(determineMeal(slotTime));
+                    slot.setDate(date);
+                    slot.setStartTime(slotTime);
+                    slot.setRemainingCapacity(Math.max(canteen.getCapacity() - booked, 0));
+
+                    slots.add(slot);
+                }
+                slotTime = slotTime.plusMinutes(durationMinutes);
+            }
+            date = date.plusDays(1);
+        }
+
+        CanteenCapacityDTO dto = new CanteenCapacityDTO();
+        dto.setCanteenId(canteen.getId());
+        dto.setSlots(slots);
+
+        return dto;
+    }
+
+    private boolean isSlotInWorkingHours(Canteen canteen, LocalTime slotStart, LocalTime slotEnd) {
+        if (canteen.getWorkingHours() == null || canteen.getWorkingHours().isEmpty()) {
+            return true;
+        }
+
+        for (WorkingHour wh : canteen.getWorkingHours()) {
+            try {
+                LocalTime whFrom = LocalTime.parse(wh.getFrom());
+                LocalTime whTo = LocalTime.parse(wh.getTo());
+
+                if (!slotStart.isBefore(whFrom) && !slotEnd.isAfter(whTo)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                continue;
+            }
+        }
+        return false;
+    }
+
+    private String determineMeal(LocalTime time) {
+        if (time.isBefore(LocalTime.of(10, 0))) return "breakfast";
+        if (time.isBefore(LocalTime.of(14, 0))) return "lunch";
+        return "dinner";
     }
 }
