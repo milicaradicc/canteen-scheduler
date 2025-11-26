@@ -18,7 +18,9 @@ Aplikacija za upravljanje rezervacijama u menzama — kreiranje menzi, radnih sa
    git clone https://github.com/milicaradicc/canteen-scheduler.git
    cd canteen-scheduler
 2. Build projekta
-mvn clean install
+   ```bash
+   mvn clean install
 
-3. Pokretanje aplikacije
-mvn spring-boot:run
+4. Pokretanje aplikacije
+   ```bash
+   mvn spring-boot:run
