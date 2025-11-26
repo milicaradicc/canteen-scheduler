@@ -25,7 +25,7 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GetStudentDTO> get(@PathVariable int id) {
+    public ResponseEntity<GetStudentDTO> get(@PathVariable String id) {
         GetStudentDTO s = studentService.get(id);
         return ResponseEntity.ok(s);
     }

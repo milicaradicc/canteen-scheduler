@@ -28,11 +28,11 @@ public class WorkingHour {
     public String getMeal() { return meal; }
     public void setMeal(String meal) { this.meal = meal; }
 
-    public String getFromTime() { return from; }
-    public void setFromTime(String fromTime) { this.from = fromTime; }
+    public String getFrom() { return from; }
+    public void setFrom(String fromTime) { this.from = fromTime; }
 
-    public String getToTime() { return to; }
-    public void setToTime(String toTime) { this.to = toTime; }
+    public String getTo() { return to; }
+    public void setTo(String toTime) { this.to = toTime; }
 
     public Canteen getCanteen() { return canteen; }
     public void setCanteen(Canteen canteen) { this.canteen = canteen; }

@@ -38,7 +38,7 @@ public class StudentService {
         return response;
     }
 
-    public GetStudentDTO get(int id) {
+    public GetStudentDTO get(String id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Student with id " + id + " not found"));
 

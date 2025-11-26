@@ -1,9 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.CreateCanteenDTO;
-import com.example.demo.dto.CreatedCanteenDTO;
-import com.example.demo.dto.GetCanteenDTO;
-import com.example.demo.dto.WorkingHourDTO;
+import com.example.demo.dto.*;
 import com.example.demo.exception.InvalidInputException;
 import com.example.demo.exception.NotFoundException;
 import com.example.demo.model.Canteen;
@@ -38,7 +35,6 @@ public class CanteenService {
             throw new InvalidInputException("Working hours list must not be empty.");
         }
 
-        // Validate each working hour
         for (var wh : dto.getWorkingHours()) {
             if (wh.getMeal() == null) {
                 throw new InvalidInputException("Meal type must not be null.");
@@ -48,7 +44,6 @@ public class CanteenService {
             }
         }
 
-        // ===== KREIRANJE MODELA =====
         Canteen canteen = new Canteen();
         canteen.setName(dto.getName());
         canteen.setLocation(dto.getLocation());
@@ -59,8 +54,8 @@ public class CanteenService {
                 .map(whDto -> {
                     WorkingHour wh = new WorkingHour();
                     wh.setMeal(whDto.getMeal());
-                    wh.setFromTime(whDto.getFrom());
-                    wh.setToTime(whDto.getTo());
+                    wh.setFrom(whDto.getFrom());
+                    wh.setTo(whDto.getTo());
                     wh.setCanteen(canteen);
                     return wh;
                 })
@@ -81,8 +76,8 @@ public class CanteenService {
                 .map(wh -> {
                     WorkingHourDTO whDto = new WorkingHourDTO();
                     whDto.setMeal(wh.getMeal());
-                    whDto.setFrom(wh.getFromTime());
-                    whDto.setTo(wh.getToTime());
+                    whDto.setFrom(wh.getFrom());
+                    whDto.setTo(wh.getTo());
                     return whDto;
                 })
                 .toList();
@@ -92,7 +87,7 @@ public class CanteenService {
         return response;
     }
 
-    public GetCanteenDTO getById(int id) {
+    public GetCanteenDTO getById(String id) {
         Canteen canteen = canteenRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Canteen with id " + id + " not found."));
 
@@ -107,8 +102,8 @@ public class CanteenService {
                 .map(wh -> {
                     WorkingHourDTO whDto = new WorkingHourDTO();
                     whDto.setMeal(wh.getMeal());
-                    whDto.setFrom(wh.getFromTime());
-                    whDto.setTo(wh.getToTime());
+                    whDto.setFrom(wh.getFrom());
+                    whDto.setTo(wh.getTo());
                     return whDto;
                 })
                 .toList();
@@ -133,8 +128,8 @@ public class CanteenService {
                             .map(wh -> {
                                 WorkingHourDTO whDto = new WorkingHourDTO();
                                 whDto.setMeal(wh.getMeal());
-                                whDto.setFrom(wh.getFromTime());
-                                whDto.setTo(wh.getToTime());
+                                whDto.setFrom(wh.getFrom());
+                                whDto.setTo(wh.getTo());
                                 return whDto;
                             })
                             .toList();
@@ -144,5 +139,56 @@ public class CanteenService {
                     return dto;
                 })
                 .toList();
+    }
+
+    public UpdatedCanteenDTO update(String studentId, String canteenId, UpdateCanteenDTO updatedCanteenDTO) {
+        Canteen canteen = canteenRepository.findById(canteenId)
+                .orElseThrow(() -> new NotFoundException("Canteen with id " + canteenId + " not found."));
+
+        canteen.setName(updatedCanteenDTO.getName());
+        canteen.setLocation(updatedCanteenDTO.getLocation());
+        canteen.setCapacity(updatedCanteenDTO.getCapacity());
+
+        canteen.getWorkingHours().clear();
+        if (updatedCanteenDTO.getWorkingHours() != null) {
+            List<WorkingHour> workingHours = updatedCanteenDTO.getWorkingHours().stream()
+                    .map(dto -> {
+                        WorkingHour wh = new WorkingHour();
+                        wh.setMeal(dto.getMeal());
+                        wh.setFrom(dto.getFrom());
+                        wh.setTo(dto.getTo());
+                        wh.setCanteen(canteen);
+                        return wh;
+                    }).toList();
+            canteen.getWorkingHours().addAll(workingHours);
+        }
+
+        Canteen savedCanteen = canteenRepository.save(canteen);
+
+        UpdatedCanteenDTO response = new UpdatedCanteenDTO();
+        response.setId(savedCanteen.getId());
+        response.setName(savedCanteen.getName());
+        response.setLocation(savedCanteen.getLocation());
+        response.setCapacity(savedCanteen.getCapacity());
+
+        if (savedCanteen.getWorkingHours() != null) {
+            List<WorkingHourDTO> whDTOs = savedCanteen.getWorkingHours().stream()
+                    .map(wh -> {
+                        WorkingHourDTO dto = new WorkingHourDTO();
+                        dto.setMeal(wh.getMeal());
+                        dto.setFrom(wh.getFrom());
+                        dto.setTo(wh.getTo());
+                        return dto;
+                    }).toList();
+            response.setWorkingHours(whDTOs);
+        }
+
+        return response;
+    }
+
+    public void delete(String studentId, String canteenId) {
+        Canteen canteen = canteenRepository.findById(canteenId)
+                .orElseThrow(() -> new NotFoundException("Canteen with id " + canteenId + " not found."));
+        canteenRepository.delete(canteen);
     }
 }
