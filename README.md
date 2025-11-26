@@ -8,7 +8,6 @@ Aplikacija za upravljanje rezervacijama u menzama — kreiranje menzi, radnih sa
 - Spring Boot 3.5.5  
 - Spring Data JPA  
 - H2 Database (in‑memory)  
-- Lombok 1.18.30  
 - Maven  
 
 ## Kako podesiti lokalno
