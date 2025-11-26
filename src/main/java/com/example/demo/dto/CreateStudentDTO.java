@@ -9,18 +9,15 @@ public class CreateStudentDTO {
     @JsonProperty("isAdmin")
     private boolean isAdmin;
 
-    // No-args constructor
     public CreateStudentDTO() {
     }
 
-    // All-args constructor
     public CreateStudentDTO(String fullName, String email, boolean isAdmin) {
         this.name = fullName;
         this.email = email;
         this.isAdmin = isAdmin;
     }
 
-    // Getters and Setters
     public String getName() {
         return name;
     }

@@ -24,7 +24,6 @@ public class WorkingHour {
 
     public WorkingHour() {}
 
-    // getters i setters
     public String getMeal() { return meal; }
     public void setMeal(String meal) { this.meal = meal; }
 
